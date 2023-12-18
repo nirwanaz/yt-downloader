@@ -1,12 +1,13 @@
 import argparse
 import io
 import subprocess
+import os
 from pytube import YouTube, Playlist
 from pytube.cli import on_progress
 from pytube.exceptions import VideoUnavailable, PytubeError
 
-AUDIO_DOWNLOAD_DIR = r"yt-downloader\downloads\audios"
-VIDEO_DOWNLOAD_DIR = r"yt-downloader\downloads\videos"
+AUDIO_DOWNLOAD_DIR = "./downloads/audios"
+VIDEO_DOWNLOAD_DIR = "./downloads/videos"
 
 def on_compelete_video_download(stream, file_path):
     print(f"Video downloaded on {file_path}")
@@ -40,7 +41,7 @@ def YoutubeAudioDownload(video_url, output_path = AUDIO_DOWNLOAD_DIR):
 
         convertVideoToAudio(audio_data.getvalue(),
                             output_path,
-                            metadata           
+                            metadata
                             )
         
     except (VideoUnavailable, PytubeError) as e:
@@ -50,7 +51,7 @@ def YoutubeAudioDownload(video_url, output_path = AUDIO_DOWNLOAD_DIR):
 
 def YoutubeVideoDownload(video_url, output_path = VIDEO_DOWNLOAD_DIR):
         
-    video = YouTube(video_url, 
+    video = YouTube(video_url,
                     on_progress_callback=on_progress,
                     on_complete_callback=on_compelete_video_download)
     
@@ -78,10 +79,13 @@ def PlaylistVideoDownload(playlist_url):
     for video_url in playlist.video_urls:
         YoutubeVideoDownload(video_url, output_path)
 
-def convertVideoToAudio(input_stream, output_file, metadata, bitrate='256k'):
+def convertVideoToAudio(input_stream, output_path, metadata, bitrate='256k'):
     try:
         print("processing...")
-        output_file = f".\{output_file}\{metadata['title']}.mp3"
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
+        output_file = f"{output_path}/{metadata['title']}.mp3"
 
         command = [
             'ffmpeg',
@@ -120,9 +124,9 @@ if __name__ == "__main__":
 
     if args["playlist"] and args["audio"]:
         PlaylistAudioDownload(args["video"])
-    if args["playlist"]:
+    elif args["playlist"]:
         PlaylistVideoDownload(args["video"])
-    if args["audio"]:
+    elif args["audio"]:
         YoutubeAudioDownload(args["video"])
     else:
         YoutubeVideoDownload(args["video"])
